@@ -7808,7 +7808,7 @@ a.anchor-link {
 <li>Clean data: remove columns and/or rows</li>
 <li>X/y Split</li>
 <li>train_test_split</li>
-<li>Fill/Encode/Scale Data: apply this only to the training set, then use those same parameters to transform the test set</li>
+<li>Fill/Encode/Scale Data: apply this only to the training set, then use those same parameters to transform the test set (binary encoding, one-hot encoding, cyclic encoding)</li>
 <li>Check Correlation Matrix on the scaled/encoded training data</li>
 <li>Pick Model &amp; Check Training Curve: Use the default settings on your training data (via Cross-Validation) to check for overfitting</li>
 <li>Grid Search: find best hyperparameters using the training set (use cross validation or validation set)</li>
@@ -8642,6 +8642,289 @@ dtype: int64</pre>
 </div>
 </div>
 </div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=c51d8d1d">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Use one-hot encoding to encode a categorical column</span>
+<span class="c1"># This is an alternative to ordinal encoding for non-ordered categories</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">one_hot_encode</span><span class="p">(</span><span class="n">X_train</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">X_test</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">columns_to_encode</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Applies one-hot encoding to the specified columns"""</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">OneHotEncoder</span>
+
+    <span class="n">X_train_encoded</span> <span class="o">=</span> <span class="n">X_train</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">X_test_encoded</span> <span class="o">=</span> <span class="n">X_test</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="n">one_hot_encoder</span> <span class="o">=</span> <span class="n">OneHotEncoder</span><span class="p">(</span>
+        <span class="n">sparse_output</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># Output a full matrix of 0 and 1 instead of a lightweight "sparse" matrix of just ones</span>
+        <span class="n">handle_unknown</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">,</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">set_output</span><span class="p">(</span><span class="n">transform</span><span class="o">=</span><span class="s2">"pandas"</span><span class="p">)</span> <span class="c1"># Otherwise the encoder outputs a numpy array instead of a pandas dataframe</span>
+
+    <span class="n">new_encoded_columns</span> <span class="o">=</span> <span class="n">one_hot_encoder</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">X_train_encoded</span><span class="p">[</span><span class="n">columns_to_encode</span><span class="p">])</span>
+
+    <span class="c1"># Add the new columns to the original TRAIN dataframe</span>
+    <span class="n">X_train_encoded</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">X_train_encoded</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">new_encoded_columns</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="p">],</span>
+        <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Add the new columns to the original dataframe</span>
+    <span class="n">new_encoded_columns</span> <span class="o">=</span> <span class="n">one_hot_encoder</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X_test_encoded</span><span class="p">[</span><span class="n">columns_to_encode</span><span class="p">])</span>
+    <span class="n">X_test_encoded</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">X_test_encoded</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">new_encoded_columns</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="p">],</span>
+        <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span>  <span class="c1"># Add the new columns to the original TEST dataframe</span>
+
+    <span class="c1"># Remove original unencoded columns</span>
+    <span class="n">X_train_encoded</span> <span class="o">=</span> <span class="n">X_train_encoded</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">columns_to_encode</span><span class="p">)</span>
+    <span class="n">X_test_encoded</span> <span class="o">=</span> <span class="n">X_test_encoded</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">columns_to_encode</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">X_train_encoded</span><span class="p">,</span> <span class="n">X_test_encoded</span>
+
+<span class="c1"># Example usage:</span>
+<span class="n">X_train_1h_encoded</span><span class="p">,</span> <span class="n">X_test_1h_encoded</span> <span class="o">=</span> <span class="n">one_hot_encode</span><span class="p">(</span><span class="n">X_train_filled</span><span class="p">,</span> <span class="n">X_test_filled</span><span class="p">,</span> <span class="n">columns_to_encode</span><span class="o">=</span><span class="p">[</span><span class="s2">"ocean_proximity"</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[ ]:</div>
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>longitude</th>
+<th>latitude</th>
+<th>housing_median_age</th>
+<th>total_rooms</th>
+<th>total_bedrooms</th>
+<th>population</th>
+<th>households</th>
+<th>median_income</th>
+<th>ocean_proximity_&lt;1H OCEAN</th>
+<th>ocean_proximity_INLAND</th>
+<th>ocean_proximity_ISLAND</th>
+<th>ocean_proximity_NEAR BAY</th>
+<th>ocean_proximity_NEAR OCEAN</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>0</th>
+<td>-122.58</td>
+<td>38.08</td>
+<td>27.0</td>
+<td>10839.0</td>
+<td>1637.000000</td>
+<td>4406.0</td>
+<td>1623.0</td>
+<td>5.6150</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>1.0</td>
+<td>0.0</td>
+</tr>
+<tr>
+<th>1</th>
+<td>-117.81</td>
+<td>33.67</td>
+<td>8.0</td>
+<td>2098.0</td>
+<td>342.000000</td>
+<td>908.0</td>
+<td>329.0</td>
+<td>7.7589</td>
+<td>1.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+</tr>
+<tr>
+<th>2</th>
+<td>-121.97</td>
+<td>37.34</td>
+<td>33.0</td>
+<td>3162.0</td>
+<td>534.667768</td>
+<td>1553.0</td>
+<td>686.0</td>
+<td>3.6682</td>
+<td>1.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+</tr>
+<tr>
+<th>3</th>
+<td>-118.40</td>
+<td>33.90</td>
+<td>38.0</td>
+<td>2868.0</td>
+<td>466.000000</td>
+<td>1098.0</td>
+<td>438.0</td>
+<td>7.9059</td>
+<td>1.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+</tr>
+<tr>
+<th>4</th>
+<td>-122.44</td>
+<td>37.79</td>
+<td>52.0</td>
+<td>3785.0</td>
+<td>808.000000</td>
+<td>1371.0</td>
+<td>799.0</td>
+<td>6.4209</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>1.0</td>
+<td>0.0</td>
+</tr>
+<tr>
+<th>...</th>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+<tr>
+<th>16507</th>
+<td>-120.35</td>
+<td>38.04</td>
+<td>16.0</td>
+<td>1499.0</td>
+<td>326.000000</td>
+<td>733.0</td>
+<td>286.0</td>
+<td>2.5729</td>
+<td>0.0</td>
+<td>1.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+</tr>
+<tr>
+<th>16508</th>
+<td>-118.39</td>
+<td>34.00</td>
+<td>35.0</td>
+<td>1465.0</td>
+<td>386.000000</td>
+<td>1104.0</td>
+<td>345.0</td>
+<td>4.0560</td>
+<td>1.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+</tr>
+<tr>
+<th>16509</th>
+<td>-118.13</td>
+<td>33.79</td>
+<td>45.0</td>
+<td>2317.0</td>
+<td>448.000000</td>
+<td>1057.0</td>
+<td>428.0</td>
+<td>4.3750</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>1.0</td>
+</tr>
+<tr>
+<th>16510</th>
+<td>-121.38</td>
+<td>38.67</td>
+<td>37.0</td>
+<td>2176.0</td>
+<td>460.000000</td>
+<td>1067.0</td>
+<td>357.0</td>
+<td>2.3958</td>
+<td>0.0</td>
+<td>1.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+</tr>
+<tr>
+<th>16511</th>
+<td>-119.83</td>
+<td>36.37</td>
+<td>25.0</td>
+<td>1549.0</td>
+<td>269.000000</td>
+<td>819.0</td>
+<td>272.0</td>
+<td>2.7159</td>
+<td>0.0</td>
+<td>1.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+</tr>
+</tbody>
+</table>
+<p>16512 rows × 13 columns</p>
+</div>
+</div>
+</div>
+</div>
+</div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=2837d629">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
@@ -9025,7 +9308,7 @@ Best score: 0.8340460980044249
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [118]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># 11. View Results: use the test set to generate your Confusion Matrix, precision/recall/F1-score (class only), or R2, mse, mae (reg only)</span>
@@ -9055,38 +9338,38 @@ Best score: 0.8340460980044249
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[ ]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[118]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
 <style type="text/css">
 </style>
-<table id="T_e6b27">
+<table id="T_addf9">
 <thead>
 <tr>
 <th class="blank level0"> </th>
-<th class="col_heading level0 col0" id="T_e6b27_level0_col0">Metric</th>
-<th class="col_heading level0 col1" id="T_e6b27_level0_col1">Value</th>
+<th class="col_heading level0 col0" id="T_addf9_level0_col0">Metric</th>
+<th class="col_heading level0 col1" id="T_addf9_level0_col1">Value</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<th class="row_heading level0 row0" id="T_e6b27_level0_row0">0</th>
-<td class="data row0 col0" id="T_e6b27_row0_col0">MAE</td>
-<td class="data row0 col1" id="T_e6b27_row0_col1">30,033.08</td>
+<th class="row_heading level0 row0" id="T_addf9_level0_row0">0</th>
+<td class="data row0 col0" id="T_addf9_row0_col0">MAE</td>
+<td class="data row0 col1" id="T_addf9_row0_col1">30,033.08</td>
 </tr>
 <tr>
-<th class="row_heading level0 row1" id="T_e6b27_level0_row1">1</th>
-<td class="data row1 col0" id="T_e6b27_row1_col0">MSE</td>
-<td class="data row1 col1" id="T_e6b27_row1_col1">2,031,383,961.33</td>
+<th class="row_heading level0 row1" id="T_addf9_level0_row1">1</th>
+<td class="data row1 col0" id="T_addf9_row1_col0">MSE</td>
+<td class="data row1 col1" id="T_addf9_row1_col1">2,031,383,961.33</td>
 </tr>
 <tr>
-<th class="row_heading level0 row2" id="T_e6b27_level0_row2">2</th>
-<td class="data row2 col0" id="T_e6b27_row2_col0">RMSE</td>
-<td class="data row2 col1" id="T_e6b27_row2_col1">45,070.88</td>
+<th class="row_heading level0 row2" id="T_addf9_level0_row2">2</th>
+<td class="data row2 col0" id="T_addf9_row2_col0">RMSE</td>
+<td class="data row2 col1" id="T_addf9_row2_col1">45,070.88</td>
 </tr>
 <tr>
-<th class="row_heading level0 row3" id="T_e6b27_level0_row3">3</th>
-<td class="data row3 col0" id="T_e6b27_row3_col0">R2 Score</td>
-<td class="data row3 col1" id="T_e6b27_row3_col1">0.85</td>
+<th class="row_heading level0 row3" id="T_addf9_level0_row3">3</th>
+<td class="data row3 col0" id="T_addf9_row3_col0">R2 Score</td>
+<td class="data row3 col1" id="T_addf9_row3_col1">0.85</td>
 </tr>
 </tbody>
 </table>
