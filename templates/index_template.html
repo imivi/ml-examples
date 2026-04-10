@@ -8,36 +8,116 @@
     <style>
         :root {
             --primary: #2563eb;
+            --primary-dark: #1e40af;
             --secondary: #64748b;
             --bg: #f8fafc;
             --card-bg: #ffffff;
             --border: #e2e8f0;
+            --header-gradient: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            --header-text: #ffffff;
         }
 
         body {
             font-family: 'Inter', -apple-system, sans-serif;
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 3rem 1rem;
+            margin: 0;
+            padding: 0;
             background: var(--bg);
             color: #0f172a;
             line-height: 1.5;
         }
 
-        h1 {
-            font-size: 2.25rem;
-            font-weight: 800;
+        header {
+            background: var(--header-gradient);
+            padding: 4rem 1rem;
             text-align: center;
             margin-bottom: 3rem;
-            color: #1e293b;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(37, 99, 235, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .header-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(37, 99, 235, 0.2);
+            color: #93c5fd;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(37, 99, 235, 0.3);
+            backdrop-filter: blur(4px);
+        }
+
+        h1 {
+            font-size: 3rem;
+            /* font-weight: 800; */
+            margin: 0;
+            color: var(--header-text);
+            /* letter-spacing: -0.025em; */
+            /* text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); */
+        }
+
+        .main-container {
+            max-width: 1000px;
+            margin: -3rem auto 0;
+            margin-top: 1rem;
+            padding: 0 1.5rem 4rem;
+            position: relative;
+            z-index: 10;
         }
 
         .resources-list {
             background: var(--card-bg);
-            border-radius: 12px;
-            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
             overflow: hidden;
             border: 1px solid var(--border);
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .resource-item {
@@ -137,27 +217,38 @@
 </head>
 
 <body>
-    <h1>{{ title }}</h1>
-
-    <div class="resources-list">
-        {% for base_name, files in file_groups|dictsort %}
-        <div class="resource-item">
-            <div class="resource-name">{{ base_name }}</div>
-            <div class="resource-links">
-                {% if '.html' in files %}
-                <a href="{{ docs_dir }}/{{ files['.html'] }}" class="link-group link-html">Open</a>
-                {% endif %}
-                {% if '.csv' in files %}
-                <a href="{{ docs_dir }}/{{ files['.csv'] }}" download class="link-group link-csv">Download CSV</a>
-                {% endif %}
-                {% if '.ipynb' in files %}
-                <a href="{{ docs_dir }}/{{ files['.ipynb'] }}" download class="link-group link-ipynb">Download ipynb</a>
-                {% endif %}
-            </div>
+    <header>
+        <div class="header-content">
+            <!-- <span class="badge">Resources & Datasets</span> -->
+            <h1>{{ title }}</h1>
         </div>
-        {% else %}
-        <div style="padding: 3rem; text-align: center; color: #64748b;">No files detected in the docs folder.</div>
-        {% endfor %}
+    </header>
+
+    <div class="main-container">
+
+        <div class="resources-list">
+            {% for base_name, files in file_groups|dictsort %}
+            <div class="resource-item">
+                <div class="resource-name">{{ base_name }}</div>
+                <div class="resource-links">
+                    {% if '.html' in files %}
+                    <a href="{{ docs_dir }}/{{ files['.html'] }}" class="link-group link-html">Open</a>
+                    {% endif %}
+                    {% if '.csv' in files %}
+                    <a href="{{ docs_dir }}/{{ files['.csv'] }}" download class="link-group link-csv">Download
+                        dataset</a>
+                    {% endif %}
+                    {% if '.ipynb' in files %}
+                    <a href="{{ docs_dir }}/{{ files['.ipynb'] }}" download class="link-group link-ipynb">Download
+                        ipynb</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div style="padding: 3rem; text-align: center; color: #64748b;">No files detected in the docs folder.</div>
+            {% endfor %}
+        </div>
+
     </div>
 
     <footer>
